@@ -69,7 +69,7 @@ socket.on('move', function(msg){
 //Ο αντίπαλος εγκατέλειψε
 socket.on('opponentLeft', function(){		
 	canMove = false;
-	document.getElementById('title').text = 'Your opponent has left. Refresh the window to play again.';	
+	document.getElementById('title').innerHTML = 'Your opponent has left. Refresh the window to play again.';	
 });
 			
 		

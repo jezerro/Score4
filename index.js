@@ -6,12 +6,17 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
 var mysql = require('mysql');
+var mongo = require('mongodb');
 
 //Στοιχεία βάσης
 var con = mysql.createConnection({host: "localhost", user: "root", password: "", database: "ttt"});
 		
 var sockets1 = [];
 var sockets2 = [];
+		
+
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb+srv://mongo:mongo123@pithia.jepfn.gcp.mongodb.net/Pithia?retryWrites=true&w=majority";
 		
 		
 app.use(express.static('./'));
@@ -22,14 +27,8 @@ app.get('/', function(req, res){
 
 
 //Ανοίγει listener στο port 3000 και συνδέεται στη βάση
-http.listen(3000, function(){
-	
-	console.log('listening on *: 3000');
-	
-	con.connect(function(err) {			
-		if (err) throw err;			
-	});
-	
+http.listen(3000, function(){	
+	console.log('listening on *: 3000');	
 });
 
 
@@ -58,66 +57,83 @@ io.on('connection', function(socket){
 	
 	//Ανταλλαγή ονομάτων και πόντων, αν ο παίκτης δεν υπάρχει δημιουργείται
 	socket.on('setName', function(msg){
-		
-		var score;		
-			
-		con.query("SELECT playerScore FROM scores WHERE playerName = '" + msg + "'", function (err, result, fields) {
 				
+		var result1;
+				
+		MongoClient.connect(url, function(err, db) {
+			
+		  if (err) throw err;
+		  var dbo = db.db("Pithia");
+		  var query = { playerName: msg };
+		  
+		  dbo.collection("Score4").find(query).toArray(function(err, result) {
 			if (err) throw err;
-				
-			if(result.length == 0){
-										
-				con.query("INSERT INTO scores (playerName, playerScore) VALUES ('" + msg + "', 0)", function (err, result) {
+			result1 = result;			
+			db.close();
+		  });
+		  
+		});			
+						
+		if(result1 === undefined || result1.length == 0){
+			console.log(1);
+			MongoClient.connect(url, function(err, db) {
+	  
+				if (err) throw err;
+				var dbo = db.db("Pithia");
+				var myobj = {playerName: msg, playerScore: 0};
 					
+				dbo.collection("Score4").insertOne(myobj, function(err, res) {
 					if (err) throw err;
+					console.log("1 document inserted");
+					db.close();
+				});
+			  
+			});
+				
+			var score = 0;					
 					
-					score = 0;					
-					
-					for(var i = 0; i < sockets1.length; i++){
+			for(var i = 0; i < sockets1.length; i++){
 			
-						if(sockets1[i] == socket.id){	
-							io.to(sockets2[i]).emit('setName', msg + '-' + score);
-							return;
-						}
-				
-					}
-					
-					for(var i = 0; i < sockets2.length; i++){
-						
-						if(sockets2[i] == socket.id){
-							io.to(sockets1[i]).emit('setName', msg + '-' + score);
-							return;
-						}
-						
-					}
-					
-				});	
-				
-			}else{				
-			
-				score = result[0].playerScore;				
-				
-				for(var i = 0; i < sockets1.length; i++){
-			
-					if(sockets1[i] == socket.id){	
-						io.to(sockets2[i]).emit('setName', msg + '-' + score);
-						return;
-					}
-				
-				}
-					
-				for(var i = 0; i < sockets2.length; i++){
-						
-					if(sockets2[i] == socket.id){
-						io.to(sockets1[i]).emit('setName', msg + '-' + score);
-						return;
-					}
-						
+				if(sockets1[i] == socket.id){	
+					io.to(sockets2[i]).emit('setName', msg + '-' + score);
+					return;
 				}
 				
-			}	
+			}
+					
+			for(var i = 0; i < sockets2.length; i++){
+						
+				if(sockets2[i] == socket.id){
+					io.to(sockets1[i]).emit('setName', msg + '-' + score);
+					return;
+				}
+						
+			}
+				
+		}else{				
+			console.log(2);
+			var score = result1[0].playerScore;				
+				
+			for(var i = 0; i < sockets1.length; i++){
 			
-		});		
+				if(sockets1[i] == socket.id){	
+					io.to(sockets2[i]).emit('setName', msg + '-' + score);
+					return;
+				}
+				
+			}
+					
+			for(var i = 0; i < sockets2.length; i++){
+						
+				if(sockets2[i] == socket.id){
+					io.to(sockets1[i]).emit('setName', msg + '-' + score);
+					return;
+				}
+						
+			}
+				
+		}	
+			
 		
 	});
   
@@ -147,8 +163,19 @@ io.on('connection', function(socket){
 	//Νίκη. Το event στελνεται από τον χαμένο
 	socket.on('victory', function(msg){	
 	
-		con.query("UPDATE scores SET playerScore = playerScore+1 WHERE playerName = '" + msg + "'", function (err, result) {					
-			if (err) throw err;								
+		MongoClient.connect(url, function(err, db) {
+			
+		  if (err) throw err;
+		  var dbo = db.db("Pithia");
+		  var myquery = {playerName: msg};
+		  var newvalues = {$inc:{playerScore: 1}};
+		  
+		  dbo.collection("Score4").updateOne(myquery, newvalues, function(err, res) {
+			if (err) throw err;
+			console.log("1 document updated");
+			db.close();
+		  });
+		  
 		});	
 	
 	});
