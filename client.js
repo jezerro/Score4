@@ -4,7 +4,7 @@ var myMoves = [];
 var opponentMoves = [];
 var timeOut;
 var name1set, name2set;
-var split;
+var opponentName;
 var myColor, opponentColor;
 var canMove;
 
@@ -13,25 +13,25 @@ var canMove;
 socket.on('setName', function(msg){		
 			
 	name2set = true;
-	split = msg.split('-');
+	opponentName = msg;
 	
-	document.getElementById('title').innerHTML = 'You are playing against ' + split[0];
-	document.getElementById('scores').innerHTML = 'Opponent has won ' + split[1] + ' matches';
+	document.getElementById('title').innerHTML = 'You are playing against ' + opponentName;
 
 	if(name1set && name2set && myColor == 'red'){
 		canMove = true;
 		timeOut = setTimeout(closeWindow, 20000);	
-		document.getElementById('title').innerHTML = 'You are playing against ' + split[0] + '. Your turn.';		
+		document.getElementById('title').innerHTML = 'You are playing against ' + opponentName + '. You play first.';			
 	}
 		
 });
 		
-		
+	
 //Χρώματα
 socket.on('setColor', function(msg){
-	
+					
 	document.getElementById('nameBtn').disabled = false;	
-				
+	document.getElementById('title').innerHTML = 'Opponent found. Enter name.';
+	
 	if(msg == 'red'){					
 		myColor = 'red';
 		opponentColor = 'green';				
@@ -46,7 +46,7 @@ socket.on('setColor', function(msg){
 //Κίνηση αντιπάλου
 socket.on('move', function(msg){
 						
-	document.getElementById(msg.slice(0, 2)).style.backgroundColor = opponentColor;
+	document.getElementById(msg).style.backgroundColor = opponentColor;
 	indexes.push(msg);
 	opponentMoves.push(msg);
 	
@@ -54,13 +54,11 @@ socket.on('move', function(msg){
 	
 	clearTimeout(timeOut);
 	timeOut = setTimeout(closeWindow, 20000);
-			
+	
 	if(checkWin() == 'lose'){			
 		clearTimeout(timeOut);
 		canMove = false;
-		document.getElementById('title').innerHTML = 'Defeat';
-		document.getElementById('scores').innerHTML = 'Opponent has won ' + parseInt(split[1])+1 + ' matches';
-		socket.emit('victory', split[0]);				
+		document.getElementById('title').innerHTML = 'You lost';
 	}
 			
 });
@@ -69,13 +67,13 @@ socket.on('move', function(msg){
 //Ο αντίπαλος εγκατέλειψε
 socket.on('opponentLeft', function(){		
 	canMove = false;
-	document.getElementById('title').innerHTML = 'Your opponent has left. Refresh the window to play again.';	
+	document.getElementById('title').innerHTML = opponentName + ' left. Refresh the window to play again.';	
 });
 			
 		
 function setName(){
 			
-	if(document.getElementById('title').innerHTML.includes('against') && split[0] == document.getElementById('name').value){			
+	if(document.getElementById('title').innerHTML.includes('against') && opponentName == document.getElementById('name').value){			
 		document.getElementById('name').val(' <- Name Taken');	
 	}else{				
 			
@@ -87,7 +85,7 @@ function setName(){
 			if(name1set && name2set && myColor == 'red'){
 				canMove = true;
 				timeOut = setTimeout(closeWindow, 20000);
-				document.getElementById('title').innerHTML = 'You are playing against ' + split[0] + '. Your turn.';						
+				document.getElementById('title').innerHTML = 'You are playing against ' + opponentName + '. You play first.';						
 			}
 			
 			var element = document.getElementById('name');
@@ -136,7 +134,7 @@ function sendMove(id) {
 
 		if (checkWin() == 'win') {
 			canMove = false;
-			document.getElementById('title').innerHTML = 'Victory';
+			document.getElementById('title').innerHTML = 'You won';
 		}
 	
 	}
@@ -173,7 +171,7 @@ function checkWin() {
 		
 		for(var j = 0; j <= 5; j++){
 			
-			if(myMoves.includes(i.toString()+j.toString())){				
+			if(myMoves.includes(j.toString()+i.toString())){				
 				sum++;				
 			}else{
 				sum = 0;
@@ -213,7 +211,7 @@ function checkWin() {
 		
 		for(var j = 0; j <= 5; j++){
 			
-			if(opponentMoves.includes(i.toString()+j.toString())){				
+			if(opponentMoves.includes(j.toString()+i.toString())){				
 				sum++;				
 			}else{
 				sum = 0;
