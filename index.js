@@ -8,8 +8,7 @@ var io = require('socket.io')(http);
 var sockets1 = [];
 var sockets2 = [];
 		
-		
-		
+				
 app.use(express.static('./'));
 
 app.get('/', function(req, res){
@@ -17,7 +16,7 @@ app.get('/', function(req, res){
 });
 
 
-//Ανοίγει listener στο port 3000 και συνδέεται στη βάση
+//Ανοίγει listener στο port 3000
 http.listen(3000, function(){	
 	console.log('listening on *: 3000');	
 });

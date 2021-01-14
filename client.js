@@ -6,7 +6,7 @@ var timeOut;
 var name1set, name2set;
 var opponentName;
 var myColor, opponentColor;
-var canMove;
+var canMove = false;
 
 
 //Ανταλλαγή ονομάτων/πόντων
@@ -28,7 +28,7 @@ socket.on('setName', function(msg){
 	
 //Χρώματα
 socket.on('setColor', function(msg){
-					
+		
 	document.getElementById('nameBtn').disabled = false;	
 	document.getElementById('title').innerHTML = 'Opponent found. Enter name.';
 	
@@ -50,9 +50,7 @@ socket.on('move', function(msg){
 	indexes.push(msg);
 	opponentMoves.push(msg);
 	
-	canMove = true;
-	
-	clearTimeout(timeOut);
+	canMove = true;	
 	timeOut = setTimeout(closeWindow, 20000);
 	
 	if(checkWin() == 'lose'){			
@@ -74,7 +72,7 @@ socket.on('opponentLeft', function(){
 function setName(){
 			
 	if(document.getElementById('title').innerHTML.includes('against') && opponentName == document.getElementById('name').value){			
-		document.getElementById('name').val(' <- Name Taken');	
+		document.getElementById('name').value += ' <- Name Taken';	
 	}else{				
 			
 		if(document.getElementById('name').value != ""){
@@ -228,13 +226,8 @@ function checkWin() {
 }
 
 
-function closing() {
-    socket.emit('clean');
-}
-
-
 function closeWindow() {
     canMove = false;
-    document.getElementById('title').innerHTML = 'Timeout';
+    document.getElementById('title').innerHTML = 'Timeout. Refresh.';
     closing();
 }
